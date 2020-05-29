@@ -174,8 +174,8 @@ def test_ffnet(model, test_loader):
     print("R2_Score : {}".format(r2))
 
 
-input_size = 35 # X length (Must be changed)
-num_classes = 16 # Y length (Must be changed)
+input_size = 7 # X length (Must be changed)
+num_classes = 1 # Y length (Must be changed)
 model = (FFNet(input_size, hidden_size, num_classes).to(device)).double()
 
 # Set the loss and optimizer
