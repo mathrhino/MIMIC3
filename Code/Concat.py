@@ -112,9 +112,6 @@ class MIMIC3(torch.utils.data.Dataset):
         self.datasetY = self.datasetY.fillna(self.datasetY.mean())
         self.datasetY = self.datasetY.to_numpy()
 
-
-
-
         X_train, X_test, y_train, y_test = train_test_split(self.datasetX, self.datasetY, test_size=holdout, random_state=random_seed)
         if(scaling == 'mean-std'):
             std_scaler = StandardScaler()
@@ -164,7 +161,7 @@ test_loader = torch.utils.data.DataLoader(dataset=test_dataset,
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 # Hyper-parameters
-hidden_size = 300
+hidden_size = 20
 learning_rate = 0.001
 
 
@@ -237,7 +234,7 @@ def test_ffnet(model, test_loader):
         print("R2_Score : {}".format(r2))
 
 
-input_size = 7  # X length (Must be changed)
+input_size = 5  # X length (Must be changed)
 num_classes = 1  # Y length (Must be changed)
 model = (FFNet(input_size, hidden_size, num_classes).to(device)).double()
 
@@ -245,6 +242,6 @@ model = (FFNet(input_size, hidden_size, num_classes).to(device)).double()
 criterion = nn.MSELoss()
 optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
 
-train_ffnet(model, train_loader, num_epochs=100)
+train_ffnet(model, train_loader, num_epochs=30)
 test_ffnet(model, test_loader)
 
