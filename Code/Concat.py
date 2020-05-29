@@ -19,7 +19,7 @@ def changeValue(datasetX):
     start_time = data.loc[:, 'DOB']
     for i in range(0, len(datasetX)):
         time_S = start_time[i].to_pydatetime()
-        data.loc[i,'DOB'] = time_S.days
+        data.loc[i,'DOB'] = time_S.day
 
     return datasetX
 
