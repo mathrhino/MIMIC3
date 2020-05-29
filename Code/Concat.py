@@ -34,7 +34,7 @@ def cal_age(start_time, finish_time):
 
 def oneHotEncoding(data):
     enc = OneHotEncoder()
-    enc.fit(data['ADMISSION_TYPE', 'GENDER'])
+    enc.fit(data[['ADMISSION_TYPE', 'GENDER']])
     data = enc.transform(data)
     return data
 
@@ -92,23 +92,29 @@ class MIMIC3(torch.utils.data.Dataset):
         self.datasetY = cal_days(self.datasetY)
         self.datasetY = self.datasetY.fillna(self.datasetY.mean())
         self.datasetY = self.datasetY.to_numpy()
+        '''
+        if(scaling = 'mean-std'):
+            std_scaler = StandardScaler()
+            X_train_std = std_scaler.fit_transform(X_train)
+            X_test_std = std_scaler.fit_transform(X_test)
+        '''
 
-        if(oversampler = 'Random'):
-            ros = RandomOverSampler(random_state=random_seed)
-            datasetX, datasetY = ros.fit_resample(datasetX, datasetY)
-        if(oversampler = 'ADASYN'):
-            datasetX, datasetY = ADASYN().fit_resample(datasetX, datasetY)
-        if(oversampler = 'SMOTE'):
-            datasetX, datasetY = SMOTE().fit_resample(datasetX, datasetY)
-
-
-        X_train, X_test, y_train, y_test = train_test_split(datasetX, datasetY, test_size=holdout, random_state=random_seed)
+        X_train, X_test, y_train, y_test = train_test_split(self.datasetX, self.datasetY, test_size=holdout, random_state=random_seed)
         if(data_opt == 'train'):
-            self.X = torch.from_numpy(self.X_train)
-            self.y = torch.from_numpy(self.y_train)
+            self.X = torch.from_numpy(X_train)
+            self.y = torch.from_numpy(y_train)
+            if (oversampler == 'Random'):
+                ros = RandomOverSampler(random_state=random_seed)
+                self.X, self.y = ros.fit_resample(self.X, self.y)
+
+            if (oversampler == 'ADASYN'):
+                self.X, self.y = ADASYN(random_state=random_seed).fit_resample(self.X, self.y)
+
+            if (oversampler == 'SMOTE'):
+                self.X, self.y = SMOTE(random_state=random_seed).fit_resample(self.X, self.y)
         else:
-            self.X = torch.from_numpy(self.X_test)
-            self.y = torch.from_numpy(self.y_test)
+            self.X = torch.from_numpy(X_test)
+            self.y = torch.from_numpy(y_test)
         self.length = self.X.shape[0]
 
     def __getitem__(self, index):
