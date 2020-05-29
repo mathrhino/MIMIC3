@@ -18,8 +18,8 @@ def changeValue(datasetX):
     datasetX['PATIENTWEIGHT'] = datasetX.PATIENTWEIGHT.astype(int)
     start_time = data.loc[:, 'DOB']
     for i in range(0, len(datasetX)):
-        start_time = start_time[i].to_pydatetime()
-        data.loc[i,'DOB'] = start_time.days
+        time_S = start_time[i].to_pydatetime()
+        data.loc[i,'DOB'] = time_S.days
 
     return datasetX
 
