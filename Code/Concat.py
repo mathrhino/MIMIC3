@@ -52,9 +52,9 @@ def cal_days(data):
     days = []
     for i in range(0, len(data)):
         start_time = data.loc[i, 'ADMITTIME']
-        start_time = start_time[i].to_pydatetime()
+        start_time = start_time.to_pydatetime()
         finish_time = data.loc[i, 'DEATHTIME']
-        finish_time = finish_time[i].to_pydatetime()
+        finish_time = finish_time.to_pydatetime()
         result = (finish_time - start_time).days
         days.append(result)
     days = df(days)
