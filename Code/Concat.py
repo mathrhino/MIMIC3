@@ -9,24 +9,26 @@ import pandas as pd
 from pandas import DataFrame as df
 import sklearn
 import sklearn.metrics
-
+from sklearn.preprocessing import StandardScaler
+from  datetime import datetime
+import time
+from sklearn.preprocessing import OneHotEncoder
+from imblearn.over_sampling import RandomOverSampler,SMOTE, ADASYN
 
 def changeValue(datasetX):
     datasetX['LOS'] = datasetX.LOS.astype(int)
     datasetX['PATIENTWEIGHT'] = datasetX.PATIENTWEIGHT.astype(int)
+    start_time = data.loc[:, 'DOB']
+    for i in range(0, len(datasetX)):
+        start_time = start_time[i].to_pydatetime()
+        data.loc[i,'DOB'] = start_time.days
 
     return datasetX
 
-
-<<<<<<< HEAD
-=======
-
->>>>>>> dd90a281e95f208b42f6083b37ab795546a7ba7f
 def cal_age(start_time, finish_time):
     start_time = start_time.to_pydatetime()
     finish_time = finish_time.to_pydatetime()
     result = ((finish_time - start_time).days) / 365
-
     return result
 
 
@@ -36,16 +38,12 @@ def oneHotEncoding(data):
     data = enc.transform(data)
     return data
 
-<<<<<<< HEAD
-
-=======
->>>>>>> dd90a281e95f208b42f6083b37ab795546a7ba7f
 def cal_days(data):
     days = []
     for i in range(0, len(data)):
-        start_time = data.iloc[:, 1]
+        start_time = data.loc[i, 'ADMITTIME']
         start_time = start_time[i].to_pydatetime()
-        finish_time = data.iloc[:, 3]
+        finish_time = data.loc[i, 'DEATHTIME']
         finish_time = finish_time[i].to_pydatetime()
         result = (finish_time - start_time).days
         days.append(result)
@@ -54,7 +52,7 @@ def cal_days(data):
 
 
 class MIMIC3(torch.utils.data.Dataset):
-    def __init__(self, col_list=None, attr_list=None):
+    def __init__(self, col_list=None, attr_list=None, data_opt = 'train', holdout = 0.3, random_seed = 42, oversampler = None):
         self.col_list = col_list;
         self.attr_list = attr_list
         self.col_default = ['ADMISSIONS', 'ICUSTAYS', 'INPUTEVENTS_MV', 'PATIENTS']
@@ -90,12 +88,28 @@ class MIMIC3(torch.utils.data.Dataset):
         self.datasetY = self.datasetX[['ADMITTIME', 'DISCHTIME', 'DEATHTIME']]
         self.datasetX = self.datasetX.drop(['ADMITTIME', 'DISCHTIME', 'DEATHTIME'], axis=1)
 
-        self.datasetY = cal_days(df(result)).to_numpy()
         self.datasetX = changeValue(oneHotEncoding(self.datasetX)).to_numpy()
+        self.datasetY = cal_days(self.datasetY)
+        self.datasetY = self.datasetY.fillna(self.datasetY.mean())
+        self.datasetY = self.datasetY.to_numpy()
 
-        self.X = torch.from_numpy(self.datasetX)
-        self.y = torch.from_numpy(self.datasetY)
-        self.length = self.datasetX.shape[0]
+        if(oversampler = 'Random'):
+            ros = RandomOverSampler(random_state=random_seed)
+            datasetX, datasetY = ros.fit_resample(datasetX, datasetY)
+        if(oversampler = 'ADASYN'):
+            datasetX, datasetY = ADASYN().fit_resample(datasetX, datasetY)
+        if(oversampler = 'SMOTE'):
+            datasetX, datasetY = SMOTE().fit_resample(datasetX, datasetY)
+
+
+        X_train, X_test, y_train, y_test = train_test_split(datasetX, datasetY, test_size=holdout, random_state=random_seed)
+        if(data_opt == 'train'):
+            self.X = torch.from_numpy(self.X_train)
+            self.y = torch.from_numpy(self.y_train)
+        else:
+            self.X = torch.from_numpy(self.X_test)
+            self.y = torch.from_numpy(self.y_test)
+        self.length = self.X.shape[0]
 
     def __getitem__(self, index):
         return self.X[index], self.y[index]
