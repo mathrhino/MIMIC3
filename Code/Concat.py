@@ -18,6 +18,10 @@ def changeValue(datasetX):
     return datasetX
 
 
+<<<<<<< HEAD
+=======
+
+>>>>>>> dd90a281e95f208b42f6083b37ab795546a7ba7f
 def cal_age(start_time, finish_time):
     start_time = start_time.to_pydatetime()
     finish_time = finish_time.to_pydatetime()
@@ -32,7 +36,10 @@ def oneHotEncoding(data):
     data = enc.transform(data)
     return data
 
+<<<<<<< HEAD
 
+=======
+>>>>>>> dd90a281e95f208b42f6083b37ab795546a7ba7f
 def cal_days(data):
     days = []
     for i in range(0, len(data)):
@@ -72,8 +79,7 @@ class MIMIC3(torch.utils.data.Dataset):
         prev = col_list[0]
         for col in col_list[1:]:
             if col != 'PATIENTS':
-                sql_line += ' JOIN {0} on {1}.SUBJECT_ID = {0}.SUBJECT_ID and {1}.HADM_ID = {0}.HADM_ID'.format(col,
-                                                                                                                prev)
+                sql_line += ' JOIN {0} on {1}.SUBJECT_ID = {0}.SUBJECT_ID and {1}.HADM_ID = {0}.HADM_ID'.format(col,prev)
             else:
                 sql_line += ' JOIN {0} on {1}.SUBJECT_ID = {0}.SUBJECT_ID'.format(col, prev)
             col_list[0] = col
