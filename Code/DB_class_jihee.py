@@ -1,14 +1,15 @@
 import pymysql
 from pandas import DataFrame as df
 
-class DataSet:
+class DataSet(torch.utils.data.Dataset):
     def __init__(self, col_list=None, attr_list=None):
         self.col_default = ['ADMISSIONS', 'ICUSTAYS', 'INPUTEVENTS_MV', 'PATIENTS']
         self.attr_default = {'ADMISSIONS':['ADMISSION_TYPE'], 'ICUSTAYS':['LOS'], 'INPUTEVENTS_MV':['PATIENTWEIGHT'], 'PATIENTS':['DOB', 'DOD', 'DOD_HOSP', 'GENDER']}
         self.col_list = self.col_default
         self.attr_list = self.attr_default
-        self.dataseX = None
+        self.datasetX = None
         self.datasetY = None
+
 
     @property
     def getDateSet (self):
