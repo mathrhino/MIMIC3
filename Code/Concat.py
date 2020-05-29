@@ -35,7 +35,8 @@ def cal_age(start_time, finish_time):
 def oneHotEncoding(data):
     enc = OneHotEncoder()
     enc.fit(data[['ADMISSION_TYPE', 'GENDER']])
-    data[['ADMISSION_TYPE', 'GENDER']] = enc.transform(data[['ADMISSION_TYPE', 'GENDER']])
+    datas = enc.transform(data[['ADMISSION_TYPE', 'GENDER']])
+    pd.concat()
     return data
 
 
@@ -47,14 +48,6 @@ def categorize(datas):
         print(i, unique[i])
         data = data.replace(to_replace=unique[i], value=i, method='pad')
     datas['ADMISSION_TYPE'] = data
-
-    data = datas['GENDER']
-    num_unique = data.nunique().astype('int')
-    unique = pd.unique(data.iloc[:, 0]).tolist()
-    for i in range(0, num_unique[0]):
-        print(i, unique[i])
-        data = data.replace(to_replace=unique[i], value=i, method='pad')
-    datas['GENDER'] = data
 
     return datas
 
@@ -108,8 +101,12 @@ class MIMIC3(torch.utils.data.Dataset):
         self.datasetX = df(result)
         self.datasetY = self.datasetX[['ADMITTIME', 'DISCHTIME', 'DEATHTIME']]
         self.datasetX = self.datasetX.drop(['ADMITTIME', 'DISCHTIME', 'DEATHTIME'], axis=1)
-
-        self.datasetX = changeValue(oneHotEncoding(self.datasetX)).to_numpy()
+        self.datasetX['GENDER'][self.datasetX['GENDER'] == 'F'] = 1
+        self.datasetX['GENDER'][self.datasetX['GENDER'] == 'M'] = 0
+        self.datasetX['ADMISSION_TYPE'][self.datasetX['ADMISSION_TYPE'] == 'EMERGENCY'] = 0
+        self.datasetX['ADMISSION_TYPE'][self.datasetX['ADMISSION_TYPE'] == 'ELECTIVE'] = 1
+        self.datasetX['ADMISSION_TYPE'][self.datasetX['ADMISSION_TYPE'] == 'URGENT'] = 2
+        self.datasetX = changeValue(self.datasetX).to_numpy()
         print(datasetX.shape)
         self.datasetY = cal_days(self.datasetY)
         self.datasetY = self.datasetY.fillna(self.datasetY.mean())
