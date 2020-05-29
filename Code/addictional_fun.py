@@ -2,11 +2,10 @@
 #pip install -U imbalanced-learn(설치 방법)
 import numpy as np
 import pandas as pd
-import matplotlib.pyplot as plt
 from sklearn.preprocessing import StandardScaler
-
+from sklearn.model_selection import train_test_split
 #oversampling library
-#from imblearn.under_sampling import *
+#from imblearn.over_sampling import *
 
 #from imblearn.over_sampling import SMOTE, ADASYN
 
@@ -21,6 +20,12 @@ df.hist(bins=50, figsize=(20,15))
 np.random.seed(42)
 X = df.loc[:,["X1","X2","X3","X4"]]
 y = df.loc[:, "y1"]
+
+#from sklearn.preprocessing import MinMaxScaler
+#std_scaler = MinMaxScaler()
+std_scaler= StandardScaler()
+X_train_std =std_scaler.fit_transform(X_train)
+X_test_std =std_scaler.fit_transform(X_test)
 
 #oversampling
 '''
@@ -45,10 +50,6 @@ X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_
 
 #Feature Scaling(Standardization)
 #train dataset만 normalize
-
-std_scaler=StandardScaler()
-X_train_std =std_scaler.fit_transform(X_train)
-X_test_std =std_scaler.fit_transform(X_test)
 
 y_train = np.array(y_train)
 y_train =y_train.reshape(-1, 1)
