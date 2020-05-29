@@ -33,7 +33,7 @@ def cal_age(start_time, finish_time):
 def oneHotEncoding(data):
     enc = OneHotEncoder()
     enc.fit(data[['ADMISSION_TYPE', 'GENDER']])
-    data = enc.transform(data)
+    data[['ADMISSION_TYPE', 'GENDER']] = enc.transform(data[['ADMISSION_TYPE', 'GENDER']])
     return data
 
 def cal_days(data):
