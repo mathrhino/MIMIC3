@@ -36,6 +36,18 @@ def oneHotEncoding(data):
     data[['ADMISSION_TYPE', 'GENDER']] = enc.transform(data[['ADMISSION_TYPE', 'GENDER']])
     return data
 
+
+def categorize(datas):
+    data = datas[['ADMISSION_TYPE', 'GENDER']]
+    num_unique = data.nunique().astype('int')
+    unique = pd.unique(data.iloc[:, 0]).tolist()
+    for i in range(0, num_unique[0]):
+        print(i, unique[i])
+        data = data.replace(to_replace=unique[i], value=i, method='pad')
+    datas[['ADMISSION_TYPE', 'GENDER']] = data
+    return datas
+
+
 def cal_days(data):
     days = []
     for i in range(0, len(data)):
@@ -86,7 +98,7 @@ class MIMIC3(torch.utils.data.Dataset):
         self.datasetY = self.datasetX[['ADMITTIME', 'DISCHTIME', 'DEATHTIME']]
         self.datasetX = self.datasetX.drop(['ADMITTIME', 'DISCHTIME', 'DEATHTIME'], axis=1)
 
-        self.datasetX = changeValue(oneHotEncoding(self.datasetX)).to_numpy()
+        self.datasetX = changeValue(categorize(self.datasetX)).to_numpy()
         self.datasetY = cal_days(self.datasetY)
         self.datasetY = self.datasetY.fillna(self.datasetY.mean())
         self.datasetY = self.datasetY.to_numpy()
