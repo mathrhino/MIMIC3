@@ -14,12 +14,9 @@ import sklearn.metrics
 def changeValue(datasetX):
     datasetX['LOS'] = datasetX.LOS.astype(int)
     datasetX['PATIENTWEIGHT'] = datasetX.PATIENTWEIGHT.astype(int)
-    datasetX['GENDER'][datasetX['GENDER'] == 'F'] = 1
-    datasetX['GENDER'][datasetX['GENDER'] == 'M'] = 0
-    print(datasetX['LOS'])
-    print(datasetX['PATIENTWEIGHT'])
-    print(datasetX['GENDER'])
+
     return datasetX
+
 
 def cal_age(start_time, finish_time):
     start_time = start_time.to_pydatetime()
@@ -27,6 +24,13 @@ def cal_age(start_time, finish_time):
     result = ((finish_time - start_time).days) / 365
 
     return result
+
+
+def oneHotEncoding(data):
+    enc = OneHotEncoder()
+    enc.fit(data['ADMISSION_TYPE', 'GENDER'])
+    data = enc.transform(data)
+    return data
 
 
 def cal_days(data):
@@ -44,10 +48,11 @@ def cal_days(data):
 
 class MIMIC3(torch.utils.data.Dataset):
     def __init__(self, col_list=None, attr_list=None):
-        self.col_list = col_list; self.attr_list = attr_list
+        self.col_list = col_list;
+        self.attr_list = attr_list
         self.col_default = ['ADMISSIONS', 'ICUSTAYS', 'INPUTEVENTS_MV', 'PATIENTS']
-        self.attr_default = {'ADMISSIONS': ['ADMISSION_TYPE'], 'ICUSTAYS': ['LOS'], 'INPUTEVENTS_MV': ['PATIENTWEIGHT'],
-                           'PATIENTS': ['DOB', 'GENDER']}
+        self.attr_default = {'ADMISSIONS': ['ADMISSION_TYPE', 'ADMITTIME', 'DISCHTIME', 'DEATHTIME'], 'ICUSTAYS': ['LOS'], 'INPUTEVENTS_MV': ['PATIENTWEIGHT'],
+                             'PATIENTS': ['DOB', 'GENDER']}
         self.col_list = self.col_default
         self.attr_list = self.attr_default
         self.datasetX = None
@@ -76,31 +81,32 @@ class MIMIC3(torch.utils.data.Dataset):
         curs.execute(sql_line)
         result = curs.fetchall()
         self.datasetX = df(result)
+        self.datasetY = self.datasetX[['ADMITTIME', 'DISCHTIME', 'DEATHTIME']]
+        self.datasetX = self.datasetX.drop(['ADMITTIME', 'DISCHTIME', 'DEATHTIME'], axis=1)
 
-        sql_line = 'SELECT SUBJECT_ID, ADMITTIME, DISCHTIME, DEATHTIME FROM ADMISSIONS;'
-        curs.execute(sql_line)
-        result = curs.fetchall()
         self.datasetY = cal_days(df(result)).to_numpy()
-        self.datasetX = changeValue(self.datasetX).to_numpy()
+        self.datasetX = changeValue(oneHotEncoding(self.datasetX)).to_numpy()
 
         self.X = torch.from_numpy(self.datasetX)
         self.y = torch.from_numpy(self.datasetY)
         self.length = self.datasetX.shape[0]
-    
+
     def __getitem__(self, index):
         return self.X[index], self.y[index]
+
     def __len__(self):
         return self.length
+
 
 # Loading the Dataset into DataLoader
 train_dataset = MIMIC3()
 test_dataset = MIMIC3()
 train_loader = torch.utils.data.DataLoader(dataset=train_dataset,
-                                           batch_size=32, 
+                                           batch_size=32,
                                            shuffle=True)
 test_loader = torch.utils.data.DataLoader(dataset=test_dataset,
-                                           batch_size=32, 
-                                           shuffle=True)
+                                          batch_size=32,
+                                          shuffle=True)
 
 # Device configuration
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
@@ -109,78 +115,84 @@ device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 hidden_size = 300
 learning_rate = 0.001
 
+
 class FFNet(nn.Module):
     def __init__(self, input_size, hidden_size, num_classes):
         super(FFNet, self).__init__()
         self.net = nn.Sequential(
-          nn.Linear(input_size, hidden_size),
-          nn.BatchNorm1d(hidden_size),
-          nn.ReLU(),
-        
-          nn.Linear(hidden_size, hidden_size),
-          nn.BatchNorm1d(hidden_size),
-          nn.ReLU(),
-          
-          nn.Linear(hidden_size, hidden_size),
-          nn.BatchNorm1d(hidden_size),
-          nn.ReLU(),
-        
-          nn.Linear(hidden_size, num_classes)
+            nn.Linear(input_size, hidden_size),
+            nn.BatchNorm1d(hidden_size),
+            nn.ReLU(),
+
+            nn.Linear(hidden_size, hidden_size),
+            nn.BatchNorm1d(hidden_size),
+            nn.ReLU(),
+
+            nn.Linear(hidden_size, hidden_size),
+            nn.BatchNorm1d(hidden_size),
+            nn.ReLU(),
+
+            nn.Linear(hidden_size, num_classes)
         )
+
     def forward(self, x):
         out = self.net(x)
         return out
 
+
 # Train the model
 def train_ffnet(model, train_loader, num_epochs):
-  total_step = len(train_loader)
-  for epoch in range(num_epochs):
-    for i, (data, labels) in enumerate(train_loader):
-      data = data.to(device)
-      labels = labels.to(device)
-      
-      # Forward pass
-      outputs = model(data)
-      loss = criterion(outputs, labels.long())
-      
-      # Backward and optimize
-      optimizer.zero_grad()
-      loss.backward()
-      optimizer.step()
-      
-      # Display the progress
-      if (i+1) % 300 == 0:
-        print ('Epoch [{}/{}], Step [{}/{}], Loss: {:.4f}'
-               .format(epoch+1, num_epochs, i+1, total_step, loss.item()))
-        
+    total_step = len(train_loader)
+    for epoch in range(num_epochs):
+        for i, (data, labels) in enumerate(train_loader):
+            data = data.to(device)
+            labels = labels.to(device)
+
+            # Forward pass
+            outputs = model(data)
+            loss = criterion(outputs, labels.long())
+
+            # Backward and optimize
+            optimizer.zero_grad()
+            loss.backward()
+            optimizer.step()
+
+            # Display the progress
+            if (i + 1) % 300 == 0:
+                print('Epoch [{}/{}], Step [{}/{}], Loss: {:.4f}'
+                      .format(epoch + 1, num_epochs, i + 1, total_step, loss.item()))
+
+
 # Test the model
 def test_ffnet(model, test_loader):
-  preds = []
-  acts = []
-  # In test phase, we don't need to compute gradients (for memory efficiency)
-  with torch.no_grad():
-    for images, labels in test_loader:
-      images = images.to(device)
-      labels = labels.to(device).long()
-      outputs = model(images)
-      predicted = outputs.data
-      preds.extend(predicted.tolist())
-      acts.extend(labels.tolist())
+    preds = []
+    acts = []
+    # In test phase, we don't need to compute gradients (for memory efficiency)
+    with torch.no_grad():
+        for images, labels in test_loader:
+            images = images.to(device)
+            labels = labels.to(device).long()
+            outputs = model(images)
+            predicted = outputs.data
+            preds.extend(predicted.tolist())
+            acts.extend(labels.tolist())
 
-    preds = np.array(preds); acts = np.array(acts)
-    r2 = sklearn.metrics.r2_score(acts,preds)
+        preds = np.array(preds);
+        acts = np.array(acts)
+        r2 = sklearn.metrics.r2_score(acts, preds)
 
-    # Display the result
-    print("R2_Score : {}".format(r2))
+        # Display the result
+        print("R2_Score : {}".format(r2))
 
 
-input_size = 7 # X length (Must be changed)
-num_classes = 1 # Y length (Must be changed)
+input_size = 7  # X length (Must be changed)
+num_classes = 1  # Y length (Must be changed)
 model = (FFNet(input_size, hidden_size, num_classes).to(device)).double()
 
 # Set the loss and optimizer
 criterion = nn.MSELoss()
-optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)  
+optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
 
 train_ffnet(model, train_loader, num_epochs=100)
 test_ffnet(model, test_loader)
+
