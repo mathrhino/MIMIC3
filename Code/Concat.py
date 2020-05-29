@@ -199,7 +199,7 @@ def train_ffnet(model, train_loader, num_epochs):
 
             # Forward pass
             outputs = model(data)
-            loss = criterion(outputs, labels.long())
+            loss = criterion(outputs, labels.double())
 
             # Backward and optimize
             optimizer.zero_grad()
@@ -220,7 +220,7 @@ def test_ffnet(model, test_loader):
     with torch.no_grad():
         for images, labels in test_loader:
             images = images.to(device)
-            labels = labels.to(device).long()
+            labels = labels.to(device).double()
             outputs = model(images)
             predicted = outputs.data
             preds.extend(predicted.tolist())
