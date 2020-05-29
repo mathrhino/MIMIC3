@@ -14,12 +14,10 @@ import sklearn.metrics
 def changeValue(datasetX):
     datasetX['LOS'] = datasetX.LOS.astype(int)
     datasetX['PATIENTWEIGHT'] = datasetX.PATIENTWEIGHT.astype(int)
-    datasetX['GENDER'][datasetX['GENDER'] == 'F'] = 1
-    datasetX['GENDER'][datasetX['GENDER'] == 'M'] = 0
-    print(datasetX['LOS'])
-    print(datasetX['PATIENTWEIGHT'])
-    print(datasetX['GENDER'])
+
     return datasetX
+
+
 
 def cal_age(start_time, finish_time):
     start_time = start_time.to_pydatetime()
@@ -28,6 +26,12 @@ def cal_age(start_time, finish_time):
 
     return result
 
+
+def oneHotEncoding(data):
+    enc = OneHotEncoder()
+    enc.fit(data['ADMISSION_TYPE', 'GENDER'])
+    data = enc.transform(data)
+    return data
 
 def cal_days(data):
     days = []
@@ -67,8 +71,7 @@ class MIMIC3(torch.utils.data.Dataset):
         prev = col_list[0]
         for col in col_list[1:]:
             if col != 'PATIENTS':
-                sql_line += ' JOIN {0} on {1}.SUBJECT_ID = {0}.SUBJECT_ID and {1}.HADM_ID = {0}.HADM_ID'.format(col,
-                                                                                                                prev)
+                sql_line += ' JOIN {0} on {1}.SUBJECT_ID = {0}.SUBJECT_ID and {1}.HADM_ID = {0}.HADM_ID'.format(col,prev)
             else:
                 sql_line += ' JOIN {0} on {1}.SUBJECT_ID = {0}.SUBJECT_ID'.format(col, prev)
             col_list[0] = col
@@ -81,7 +84,7 @@ class MIMIC3(torch.utils.data.Dataset):
         curs.execute(sql_line)
         result = curs.fetchall()
         self.datasetY = cal_days(df(result)).to_numpy()
-        self.datasetX = changeValue(self.datasetX).to_numpy()
+        self.datasetX = changeValue(oneHotEncoding(self.datasetX)).to_numpy()
 
         self.X = torch.from_numpy(self.datasetX)
         self.y = torch.from_numpy(self.datasetY)
