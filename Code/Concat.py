@@ -55,7 +55,7 @@ def categorize(datas):
         print(i, unique[i])
         data = data.replace(to_replace=unique[i], value=i, method='pad')
     datas['GENDER'] = data
-    
+
     return datas
 
 
@@ -109,7 +109,7 @@ class MIMIC3(torch.utils.data.Dataset):
         self.datasetY = self.datasetX[['ADMITTIME', 'DISCHTIME', 'DEATHTIME']]
         self.datasetX = self.datasetX.drop(['ADMITTIME', 'DISCHTIME', 'DEATHTIME'], axis=1)
 
-        self.datasetX = changeValue(categorize(self.datasetX)).to_numpy()
+        self.datasetX = changeValue(oneHotEncoding(self.datasetX)).to_numpy()
         self.datasetY = cal_days(self.datasetY)
         self.datasetY = self.datasetY.fillna(self.datasetY.mean())
         self.datasetY = self.datasetY.to_numpy()
