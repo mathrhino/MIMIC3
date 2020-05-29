@@ -9,12 +9,10 @@ import pandas as pd
 from pandas import DataFrame as df
 import sklearn
 import sklearn.metrics
-from sklearn.preprocessing import StandardScaler
+from sklearn.preprocessing import OneHotEncoder, MinMaxScaler, StandardScaler
 from  datetime import datetime
 import time
-from sklearn.preprocessing import OneHotEncoder
 from imblearn.over_sampling import RandomOverSampler,SMOTE, ADASYN
-
 def changeValue(datasetX):
     datasetX['LOS'] = datasetX.LOS.astype(int)
     datasetX['PATIENTWEIGHT'] = datasetX.PATIENTWEIGHT.astype(int)
@@ -52,7 +50,7 @@ def cal_days(data):
 
 
 class MIMIC3(torch.utils.data.Dataset):
-    def __init__(self, col_list=None, attr_list=None, data_opt = 'train', holdout = 0.3, random_seed = 42, oversampler = None):
+    def __init__(self, col_list=None, attr_list=None, data_opt = 'train', scaling = 'mean-std', holdout = 0.3, random_seed = 42, oversampler = None):
         self.col_list = col_list;
         self.attr_list = attr_list
         self.col_default = ['ADMISSIONS', 'ICUSTAYS', 'INPUTEVENTS_MV', 'PATIENTS']
@@ -92,14 +90,21 @@ class MIMIC3(torch.utils.data.Dataset):
         self.datasetY = cal_days(self.datasetY)
         self.datasetY = self.datasetY.fillna(self.datasetY.mean())
         self.datasetY = self.datasetY.to_numpy()
-        '''
-        if(scaling = 'mean-std'):
-            std_scaler = StandardScaler()
-            X_train_std = std_scaler.fit_transform(X_train)
-            X_test_std = std_scaler.fit_transform(X_test)
-        '''
+
+
+
 
         X_train, X_test, y_train, y_test = train_test_split(self.datasetX, self.datasetY, test_size=holdout, random_state=random_seed)
+        if(scaling == 'mean-std'):
+            std_scaler = StandardScaler()
+            X_train = std_scaler.fit_transform(X_train)
+            X_test = std_scaler.transform(X_test)
+        if(scaling =='min-max'):
+            scaler = MinMaxScaler()
+            scaler.fit(X_train)
+            X_train = scaler.transform(X_train)
+            X_test = scaler.transform(X_test)
+
         if(data_opt == 'train'):
             self.X = torch.from_numpy(X_train)
             self.y = torch.from_numpy(y_train)
