@@ -57,7 +57,7 @@ def cal_days(data):
     for i in range(0, len(data)):
         start_time = data.loc[i, 'ADMITTIME']
         start_time = start_time.to_pydatetime()
-        finish_time = data.loc[i, 'DEATHTIME']
+        finish_time = data.loc[i, 'DISCHTIME']
         finish_time = finish_time.to_pydatetime()
         result = (finish_time - start_time).days
         days.append(result)
@@ -164,6 +164,8 @@ device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 hidden_size = 20
 learning_rate = 0.001
 
+def RMSELoss(yhat,y):
+    return torch.sqrt(torch.mean((yhat-y)**2))
 
 class FFNet(nn.Module):
     def __init__(self, input_size, hidden_size, num_classes):
@@ -228,10 +230,15 @@ def test_ffnet(model, test_loader):
 
         preds = np.array(preds);
         acts = np.array(acts)
+        yhat = torch.from_numpy(preds)
+        y = torch.from_numpy(acts)
+        criterion2 = RMSELoss
+        loss2 = criterion2(yhat, y)
         r2 = sklearn.metrics.r2_score(acts, preds)
 
         # Display the result
         print("R2_Score : {}".format(r2))
+        print("RMSE : {}".format(loss2))
 
 
 input_size = 5  # X length (Must be changed)
