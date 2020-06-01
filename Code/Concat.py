@@ -13,15 +13,15 @@ from sklearn.preprocessing import OneHotEncoder, MinMaxScaler, StandardScaler
 import datetime
 import time
 from imblearn.over_sampling import RandomOverSampler,SMOTE, ADASYN
-import sklearn.model_selection.train_test_split
+from sklearn.model_selection import train_test_split
 
 def changeValue(datasetX):
     datasetX['LOS'] = datasetX.LOS.astype(int)
     datasetX['PATIENTWEIGHT'] = datasetX.PATIENTWEIGHT.astype(int)
-    start_time = data.loc[:, 'DOB']
+    start_time = datasetX.loc[:, 'DOB']
     for i in range(0, len(datasetX)):
         time_S = start_time[i].to_pydatetime()
-        data.loc[i,'DOB'] = time_S.day
+        datasetX.loc[i,'DOB'] = time_S.day
 
     return datasetX
 
@@ -107,7 +107,7 @@ class MIMIC3(torch.utils.data.Dataset):
         self.datasetX['ADMISSION_TYPE'][self.datasetX['ADMISSION_TYPE'] == 'ELECTIVE'] = 1
         self.datasetX['ADMISSION_TYPE'][self.datasetX['ADMISSION_TYPE'] == 'URGENT'] = 2
         self.datasetX = changeValue(self.datasetX).to_numpy()
-        print(datasetX.shape)
+        print(self.datasetX.shape)
         self.datasetY = cal_days(self.datasetY)
         self.datasetY = self.datasetY.fillna(self.datasetY.mean())
         self.datasetY = self.datasetY.to_numpy()
