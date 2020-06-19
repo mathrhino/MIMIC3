@@ -76,7 +76,7 @@ class MIMIC3(torch.utils.data.Dataset):
                                                       'INPUTEVENTS_MV': ['PATIENTWEIGHT'],'PATIENTS': ['DOB', 'GENDER']}
 
         for y in ['ADMITTIME', 'DISCHTIME', 'DEATHTIME'] :
-            if y not in attr_default['ADMISSIONS']: attr_default['ADMISSIONS'].append(y)
+            if y not in self.attr_list['ADMISSIONS']: self.attr_list['ADMISSIONS'].append(y)
 
         self.datasetX = None
         self.datasetY = None
@@ -102,7 +102,7 @@ class MIMIC3(torch.utils.data.Dataset):
         sql_line += ';'
         curs.execute(sql_line)
         result = curs.fetchall()
-
+        print(df(result))
         # 여기부터
         self.datasetX = df(result)
         self.datasetY = self.datasetX[['ADMITTIME', 'DISCHTIME', 'DEATHTIME']]
