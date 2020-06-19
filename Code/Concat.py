@@ -186,7 +186,10 @@ train_loader = torch.utils.data.DataLoader(dataset=train_dataset,
 test_loader = torch.utils.data.DataLoader(dataset=test_dataset,
                                           batch_size=32,
                                           shuffle=True)
-
+input_size = 5  # X length (Must be changed)
+for i, (data, labels) in enumerate(train_loader):
+    input_size = data.shape[1]
+    break
 # Device configuration
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
@@ -271,7 +274,7 @@ def test_ffnet(model, test_loader):
         print("RMSE : {}".format(loss2))
 
 
-input_size = 5  # X length (Must be changed)
+
 num_classes = 1  # Y length (Must be changed)
 model = (FFNet(input_size, hidden_size, num_classes).to(device)).double()
 
