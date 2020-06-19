@@ -128,11 +128,11 @@ class MIMIC3(torch.utils.data.Dataset):
         self.datasetX = changeValue(self.datasetX)#.to_numpy()
         for i in self.datasetX.columns:
             if self.datasetX[i].dtype == object:
-                self.datasetX[i] = pd.get_dummies(self.datasetX[i])
+                self.datasetX = pd.concat([self.datasetX, pd.get_dummies(self.datasetX[i], prefix = i)], axis = 1)
+                del(self.datasetX[i])
 
-        # self.datasetX = pd.get_dummies(self.datasetX) # Onehotencoding on strings
         if((type(categorize) is list) and categorize != None):
-            pd.get_dummies(self.datasetX, columns = categorize)
+            self.datasetX = pd.get_dummies(self.datasetX, columns = categorize)
         print(self.datasetX.shape)
         print(self.datasetX)
         self.datasetY = cal_days(self.datasetY)
