@@ -17,12 +17,22 @@ from imblearn.over_sampling import RandomOverSampler,SMOTE, ADASYN
 from sklearn.model_selection import train_test_split
 
 def changeValue(datasetX):
-    datasetX['LOS'] = datasetX.LOS.astype(int)
-    datasetX['PATIENTWEIGHT'] = datasetX.PATIENTWEIGHT.astype(int)
-    start_time = datasetX.loc[:, 'DOB']
-    for i in range(0, len(datasetX)):
-        time_S = start_time[i].to_pydatetime()
-        datasetX.loc[i,'DOB'] = time_S.day
+    if 'LOS' in datasetX.columns:
+        datasetX['LOS'] = datasetX.LOS.astype(int)
+    if 'PATIENTWEIGHT' in datasetX.columns:
+        datasetX['PATIENTWEIGHT'] = datasetX.PATIENTWEIGHT.astype(int)
+    ####### 이 부분 어떻게 해야할 지??? ##########
+
+    time_col = ['ADMITTIME', 'DISCHTIME', 'DEATHTIME', 'EDREGTIME', 'EDOUTTIME', 'CHARTDATE', 'INTIME', 'OUTTIME', 'DOB', 'DOD', 'DOD_HOSP', 'DOD_SSN']
+    # time_start = {'DISCHTIME':'ADMITTIME', 'DEATHTIME':'ADMITTIME', 'EDOUTTIME':'EDREGTIME'
+    #     , 'OUTTIME':'INTIME', 'DOD':'DOB', 'DOD_HOSP':'DOB', 'DOD_SSN':'DOB'}
+
+    for col in datasetX.columns():
+        if col in time_col:
+            start_time = datasetX.loc[:, col]
+            for i in range(0, len(datasetX)):
+                time_S = start_time[i].to_pydatetime()
+                datasetX.loc[i, col] = time_S.day
 
     return datasetX
 
@@ -67,7 +77,7 @@ def cal_days(data):
 
 
 class MIMIC3(torch.utils.data.Dataset):
-    def __init__(self, col_list="default", attr_list="default", data_opt = 'train', scaling = 'mean-std', holdout = 0.3, random_seed = 42, oversampler = None):
+    def __init__(self, col_list="default", attr_list="default", categorize = None, data_opt = 'train', scaling = 'mean-std', holdout = 0.3, random_seed = 42, oversampler = None):
         self.col_list = col_list;
         self.attr_list = attr_list
 
@@ -107,11 +117,9 @@ class MIMIC3(torch.utils.data.Dataset):
         self.datasetX = df(result)
         self.datasetY = self.datasetX[['ADMITTIME', 'DISCHTIME', 'DEATHTIME']]
         self.datasetX = self.datasetX.drop(['ADMITTIME', 'DISCHTIME', 'DEATHTIME'], axis=1)
-        self.datasetX['GENDER'][self.datasetX['GENDER'] == 'F'] = 1
-        self.datasetX['GENDER'][self.datasetX['GENDER'] == 'M'] = 0
-        self.datasetX['ADMISSION_TYPE'][self.datasetX['ADMISSION_TYPE'] == 'EMERGENCY'] = 0
-        self.datasetX['ADMISSION_TYPE'][self.datasetX['ADMISSION_TYPE'] == 'ELECTIVE'] = 1
-        self.datasetX['ADMISSION_TYPE'][self.datasetX['ADMISSION_TYPE'] == 'URGENT'] = 2
+        self.datasetX = pd.get_dummies(self.datasetX) # Onehotencoding on strings
+        if((type(categorize) is list) and categorize != None):
+            pd.get_dummies(self.datasetX, columns = categorize)
         self.datasetX = changeValue(self.datasetX).to_numpy()
         print(self.datasetX.shape)
         self.datasetY = cal_days(self.datasetY)
