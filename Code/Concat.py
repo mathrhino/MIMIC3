@@ -17,6 +17,8 @@ from imblearn.over_sampling import RandomOverSampler,SMOTE, ADASYN
 from sklearn.model_selection import train_test_split
 
 def changeValue(datasetX):
+
+    print(datasetX.columns)
     if 'LOS' in datasetX.columns:
         datasetX['LOS'] = datasetX.LOS.astype(int)
     if 'PATIENTWEIGHT' in datasetX.columns:
@@ -27,14 +29,19 @@ def changeValue(datasetX):
     # time_start = {'DISCHTIME':'ADMITTIME', 'DEATHTIME':'ADMITTIME', 'EDOUTTIME':'EDREGTIME'
     #     , 'OUTTIME':'INTIME', 'DOD':'DOB', 'DOD_HOSP':'DOB', 'DOD_SSN':'DOB'}
 
+    datasetX = df(datasetX)
     for col in datasetX.columns:
         if col in time_col:
             start_time = datasetX.loc[:, col]
             for i in range(0, len(datasetX)):
                 time_S = start_time[i].to_pydatetime()
                 datasetX.loc[i, col] = time_S.day
-
     return datasetX
+
+    # start_time = datasetX.loc[:, 'DOB']
+    # for i in range(0, len(datasetX)):
+    #     time_S = start_time[i].to_pydatetime()
+    #     datasetX.loc[i,'DOB'] = time_S.day
 
 def cal_age(start_time, finish_time):
     start_time = start_time.to_pydatetime()
@@ -117,12 +124,17 @@ class MIMIC3(torch.utils.data.Dataset):
         self.datasetX = df(result)
         self.datasetY = self.datasetX[['ADMITTIME', 'DISCHTIME', 'DEATHTIME']]
         self.datasetX = self.datasetX.drop(['ADMITTIME', 'DISCHTIME', 'DEATHTIME'], axis=1)
-        self.datasetX = changeValue(self.datasetX)
-        self.datasetX = pd.get_dummies(self.datasetX) # Onehotencoding on strings
+
+        self.datasetX = changeValue(self.datasetX)#.to_numpy()
+        for i in self.datasetX.columns:
+            if self.datasetX[i].dtype == object:
+                self.datasetX[i] = pd.get_dummies(self.datasetX[i])
+
+        # self.datasetX = pd.get_dummies(self.datasetX) # Onehotencoding on strings
         if((type(categorize) is list) and categorize != None):
-            self.datasetX = pd.get_dummies(self.datasetX, columns = categorize)
+            pd.get_dummies(self.datasetX, columns = categorize)
         print(self.datasetX.shape)
-        self.datasetX = self.datasetX.to_numpy()
+        print(self.datasetX)
         self.datasetY = cal_days(self.datasetY)
         self.datasetY = self.datasetY.fillna(self.datasetY.mean())
         self.datasetY = self.datasetY.to_numpy()
