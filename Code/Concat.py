@@ -132,7 +132,9 @@ class MIMIC3(torch.utils.data.Dataset):
                 del(self.datasetX[i])
 
         if((type(categorize) is list) and categorize != None):
-            self.datasetX = pd.get_dummies(self.datasetX, columns = categorize)
+            for i in categorize :
+                self.datasetX = pd.concat([self.datasetX, pd.get_dummies(self.datasetX[i], prefix=i)], axis=1)
+                del (self.datasetX[i])
         print(self.datasetX.shape)
         print(self.datasetX)
         self.datasetY = cal_days(self.datasetY)
