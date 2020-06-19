@@ -66,14 +66,17 @@ def cal_days(data):
 
 
 class MIMIC3(torch.utils.data.Dataset):
-    def __init__(self, col_list=None, attr_list=None, data_opt = 'train', scaling = 'mean-std', holdout = 0.3, random_seed = 42, oversampler = None):
+    def __init__(self, col_list="default", attr_list="default", data_opt = 'train', scaling = 'mean-std', holdout = 0.3, random_seed = 42, oversampler = None):
         self.col_list = col_list;
         self.attr_list = attr_list
-        self.col_default = ['ADMISSIONS', 'ICUSTAYS', 'INPUTEVENTS_MV', 'PATIENTS']
-        self.attr_default = {'ADMISSIONS': ['ADMISSION_TYPE', 'ADMITTIME', 'DISCHTIME', 'DEATHTIME'], 'ICUSTAYS': ['LOS'], 'INPUTEVENTS_MV': ['PATIENTWEIGHT'],
-                             'PATIENTS': ['DOB', 'GENDER']}
-        self.col_list = self.col_default
-        self.attr_list = self.attr_default
+
+        if(col_list == 'default'): self.col_list = ['ADMISSIONS', 'ICUSTAYS', 'INPUTEVENTS_MV', 'PATIENTS']
+        if(attr_list == 'default'): self.attr_list = {'ADMISSIONS': ['ADMISSION_TYPE', 'ADMITTIME', 'DISCHTIME', 'DEATHTIME'], 'ICUSTAYS': ['LOS'],
+                                                      'INPUTEVENTS_MV': ['PATIENTWEIGHT'],'PATIENTS': ['DOB', 'GENDER']}
+
+        for y in ['ADMITTIME', 'DISCHTIME', 'DEATHTIME'] :
+            if y not in attr_default['ADMISSIONS']: attr_default['ADMISSIONS'].append(y)
+
         self.datasetX = None
         self.datasetY = None
 
@@ -98,6 +101,8 @@ class MIMIC3(torch.utils.data.Dataset):
         sql_line += ';'
         curs.execute(sql_line)
         result = curs.fetchall()
+
+        # 여기부터
         self.datasetX = df(result)
         self.datasetY = self.datasetX[['ADMITTIME', 'DISCHTIME', 'DEATHTIME']]
         self.datasetX = self.datasetX.drop(['ADMITTIME', 'DISCHTIME', 'DEATHTIME'], axis=1)
@@ -111,6 +116,7 @@ class MIMIC3(torch.utils.data.Dataset):
         self.datasetY = cal_days(self.datasetY)
         self.datasetY = self.datasetY.fillna(self.datasetY.mean())
         self.datasetY = self.datasetY.to_numpy()
+        # 여기까지 뜯어 고쳐야함.
 
         X_train, X_test, y_train, y_test = train_test_split(self.datasetX, self.datasetY, test_size=holdout, random_state=random_seed)
         if(scaling == 'mean-std'):
