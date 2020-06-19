@@ -178,8 +178,11 @@ class MIMIC3(torch.utils.data.Dataset):
 
 
 # Loading the Dataset into DataLoader
-train_dataset = MIMIC3()
-test_dataset = MIMIC3()
+col_list = ['ADMISSIONS', 'ICUSTAYS', 'INPUTEVENTS_MV', 'PATIENTS']
+attr_list = {'ADMISSIONS': ['DIAGNOSIS', 'ADMISSION_TYPE', 'ADMITTIME', 'DISCHTIME', 'DEATHTIME'], 'ICUSTAYS': ['LOS'],
+                                                      'INPUTEVENTS_MV': ['PATIENTWEIGHT'],'PATIENTS': ['DOB', 'GENDER']}
+train_dataset = MIMIC3(col_list=col_list.copy(), attr_list=attr_list.copy())
+test_dataset = MIMIC3(col_list=col_list.copy(), attr_list=attr_list.copy())
 train_loader = torch.utils.data.DataLoader(dataset=train_dataset,
                                            batch_size=32,
                                            shuffle=True)
