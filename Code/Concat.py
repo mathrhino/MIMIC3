@@ -27,7 +27,7 @@ def changeValue(datasetX):
     # time_start = {'DISCHTIME':'ADMITTIME', 'DEATHTIME':'ADMITTIME', 'EDOUTTIME':'EDREGTIME'
     #     , 'OUTTIME':'INTIME', 'DOD':'DOB', 'DOD_HOSP':'DOB', 'DOD_SSN':'DOB'}
 
-    for col in datasetX.columns():
+    for col in datasetX.columns:
         if col in time_col:
             start_time = datasetX.loc[:, col]
             for i in range(0, len(datasetX)):
@@ -97,7 +97,7 @@ class MIMIC3(torch.utils.data.Dataset):
         # Select LABEVENTS,SUBJECT_ID FROM LABEVENTS JOIN PATIENTS on LABEVENTS.SUBJECT_ID = PATIENTS.SUBJECT_ID JOIN ADMISSIONS on PATIENTS.SUBJECT_ID = ADMISSIONS.SUBJECT_ID
         sql_line = 'SELECT'
         for col in col_list:
-            for attr in self.attr_default[col]:
+            for attr in self.attr_list[col]:
                 sql_line += ' ,' + col + '.' + attr
         sql_line += ' FROM ' + col_list[0]
         sql_line = sql_line[:7] + sql_line[8:]
@@ -117,11 +117,10 @@ class MIMIC3(torch.utils.data.Dataset):
         self.datasetX = df(result)
         self.datasetY = self.datasetX[['ADMITTIME', 'DISCHTIME', 'DEATHTIME']]
         self.datasetX = self.datasetX.drop(['ADMITTIME', 'DISCHTIME', 'DEATHTIME'], axis=1)
-        self.datasetX = changeValue(self.datasetX).to_numpy()
         self.datasetX = pd.get_dummies(self.datasetX) # Onehotencoding on strings
         if((type(categorize) is list) and categorize != None):
             pd.get_dummies(self.datasetX, columns = categorize)
-
+        self.datasetX = changeValue(self.datasetX).to_numpy()
         print(self.datasetX.shape)
         self.datasetY = cal_days(self.datasetY)
         self.datasetY = self.datasetY.fillna(self.datasetY.mean())
