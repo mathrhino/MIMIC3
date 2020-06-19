@@ -10,6 +10,7 @@ from pandas import DataFrame as df
 import sklearn
 import sklearn.metrics
 from sklearn.preprocessing import OneHotEncoder, MinMaxScaler, StandardScaler
+from sklearn.preprocessing import LabelEncoder
 import datetime
 import time
 from imblearn.over_sampling import RandomOverSampler,SMOTE, ADASYN
