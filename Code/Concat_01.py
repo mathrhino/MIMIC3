@@ -194,10 +194,10 @@ attr_list = {'ADMISSIONS': ['DIAGNOSIS', 'ADMISSION_TYPE', 'ADMITTIME', 'DISCHTI
 user_set = 1
 if user_set == 0:
     train_dataset = MIMIC3()
-    test_dataset = MIMIC3()
+    test_dataset = MIMIC3(data_opt = 'test')
 else:
     train_dataset = MIMIC3(col_list=col_list.copy(), attr_list=attr_list.copy())
-    test_dataset = MIMIC3(col_list=col_list.copy(), attr_list=attr_list.copy())
+    test_dataset = MIMIC3(col_list=col_list.copy(), attr_list=attr_list.copy(), data_opt = 'test')
 
 
 train_loader = torch.utils.data.DataLoader(dataset=train_dataset,
